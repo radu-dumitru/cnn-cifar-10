@@ -26,6 +26,11 @@ def download_and_extract():
         tar.extractall()
     print("Extraction complete.")
 
+    # Remove the archive file after extraction
+    if os.path.exists(ARCHIVE_NAME):
+        os.remove(ARCHIVE_NAME)
+        print(f"Removed archive file: {ARCHIVE_NAME}")
+
 def unpickle(file):
     with open(file, 'rb') as fo:
         data = pickle.load(fo, encoding='bytes')
