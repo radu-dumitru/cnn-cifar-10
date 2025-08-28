@@ -1,3 +1,4 @@
-myenv
+myenv/
 cifar-10-python.tar.gz
-cifar-10-batches-py
+cifar-10-batches-py/
+**/__pycache__/
