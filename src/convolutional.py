@@ -12,53 +12,54 @@ class Convolutional:
 
 	def forward(self, input):
 		self.input = input
-		h_in, w_in, _ = input.shape
+		batch_size, h_in, w_in, _ = input.shape
 
-		self.input_padded = np.pad(input, ((self.padding, self.padding), (self.padding, self.padding), (0, 0)), mode='constant')
+		self.input_padded = np.pad(input, ((0, 0), (self.padding, self.padding), (self.padding, self.padding), (0, 0)), mode='constant')
 
 		h_out = (h_in + 2 * self.padding - self.k_h) // self.stride + 1
 		w_out = (w_in + 2 * self.padding - self.k_w) // self.stride + 1
 
-		out = np.zeros((h_out, w_out, self.num_filters))
+		out = np.zeros((batch_size, h_out, w_out, self.num_filters))
 
-		for f in range(self.num_filters):
-			for i in range(h_out):
-				for j in range (w_out):
-					h_start = i * self.stride
-					h_end = h_start + self.k_h
-					w_start = j * self.stride
-					w_end = w_start + self.k_w
+		for n in range(batch_size):
+			for f in range(self.num_filters):
+				for i in range(h_out):
+					for j in range (w_out):
+						h_start = i * self.stride
+						h_end = h_start + self.k_h
+						w_start = j * self.stride
+						w_end = w_start + self.k_w
 
-					patch = self.input_padded[h_start:h_end, w_start:w_end, :]
-					out[i, j, f] = np.sum(patch * self.weights[:, :, :, f]) + self.bias[f]
+						patch = self.input_padded[n, h_start:h_end, w_start:w_end, :]
+						out[n, i, j, f] = np.sum(patch * self.weights[:, :, :, f]) + self.bias[f]
 
 		self.out = out
 		return out
 
 	def backward(self, d_out, learning_rate=0.01):
-		h_in, w_in, _ = self.input.shape
-		h_out, w_out, _ = d_out.shape
+		batch_size, h_out, w_out, _ = d_out.shape
 
 		dx_padded = np.zeros_like(self.input_padded)
 		dw = np.zeros_like(self.weights)
 		db = np.zeros_like(self.bias)
 
-		for f in range(self.num_filters):
-			for i in range(h_out):
-				for j in range(w_out):
-					h_start = i * self.stride
-					h_end = h_start + self.k_h
-					w_start = j * self.stride
-					w_end = w_start + self.k_w
+		for n in range(batch_size):
+			for f in range(self.num_filters):
+				for i in range(h_out):
+					for j in range(w_out):
+						h_start = i * self.stride
+						h_end = h_start + self.k_h
+						w_start = j * self.stride
+						w_end = w_start + self.k_w
 
-					patch = self.input_padded[h_start:h_end, w_start:w_end, :]
+						patch = self.input_padded[n, h_start:h_end, w_start:w_end, :]
 
-					dw[:, :, :, f] += patch * d_out[i, j, f]
-					dx_padded[h_start:h_end, w_start:w_end, :] += self.weights[:, :, :, f] * d_out[i, j, f]
-					db[f] += d_out[i, j, f]
+						dw[:, :, :, f] += patch * d_out[n, i, j, f]
+						dx_padded[n, h_start:h_end, w_start:w_end, :] += self.weights[:, :, :, f] * d_out[n, i, j, f]
+						db[f] += d_out[n, i, j, f]
 
 		if self.padding > 0:
-			dx = dx_padded[self.padding:-self.padding, self.padding:-self.padding, :]
+			dx = dx_padded[:, self.padding:-self.padding, self.padding:-self.padding, :]
 		else:
 			dx = dx_padded
 
