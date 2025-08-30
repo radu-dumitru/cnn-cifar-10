@@ -11,7 +11,7 @@ class Network:
             ReLU(),
             MaxPool(pool_size=2),
             Flatten(),
-            Dense(32*16*16, 128),
+            Dense(16*16*8, 128),
             ReLU(),
             Dense(128, 10)
         ]
